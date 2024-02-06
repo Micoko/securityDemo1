@@ -6,10 +6,10 @@ import org.springframework.context.annotation.Configuration;
 import org.springframework.security.config.annotation.method.configuration.EnableMethodSecurity;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.config.annotation.web.configuration.EnableWebSecurity;
+import org.springframework.security.config.http.SessionCreationPolicy;
 import org.springframework.security.web.SecurityFilterChain;
 
 import static org.springframework.security.config.Customizer.withDefaults;
-
 @Configuration
 @EnableWebSecurity
 @EnableMethodSecurity
@@ -17,19 +17,26 @@ public class SpringSecurityConfig {
 
   @Bean
   public SecurityFilterChain filterChain(HttpSecurity http) throws Exception {
-    http.authorizeHttpRequests(request -> request
+    http
+        .authorizeHttpRequests(request -> request
             .dispatcherTypeMatchers(DispatcherType.FORWARD).permitAll()
+            .requestMatchers("/status", "/images/**", "/view/join", "/auth/join").permitAll()
             .anyRequest().authenticated()
         )
         .formLogin(login -> login
-            .loginPage("/view/login")	// [A] 커스텀 로그인 페이지 지정
-            .loginProcessingUrl("/login-process")	// [B] submit 받을 url
-            .usernameParameter("userid")	// [C] submit할 아이디
-            .passwordParameter("pw")	// [D] submit할 비밀번호
+            .loginPage("/view/login")
+            .loginProcessingUrl("/login-process")
+            .usernameParameter("userid")
+            .passwordParameter("pw")
             .defaultSuccessUrl("/view/dashboard", true)
             .permitAll()
         )
-        .logout(withDefaults());
+        .logout(withDefaults())
+        .sessionManagement(session -> session
+            .sessionCreationPolicy(SessionCreationPolicy.IF_REQUIRED)
+            .maximumSessions(1)
+            .maxSessionsPreventsLogin(false)
+        );
 
     return http.build();
   }
